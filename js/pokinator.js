@@ -48,48 +48,59 @@ function load_data() {
 			pokemons[i+1] = new Pokemon(allPokemons[i]['name']);
 		}	
 
-		// load responses
-		getResponses().then(function(allResponsesJson){
-			allResponses = JSON.parse(allResponsesJson);
+		load_questions_responses();
 
-			//load questions
-			getQuestions().then(function(allQuestionsJson){
-				allQuestions = JSON.parse(allQuestionsJson);
-
-				// create questions
-				var typeQuestion;
-				for (var i = 0; i < allQuestions.length ; i++){
-					var yesRslt = new Array();
-					var noRslt = new Array();
-					for (var j = 0; j < allResponses.length; j++){
-						// pour toutes les réponses relative à cette question
-						if(allResponses[j]['idQuestion'] == allQuestions[i]['id']){
-							// si la réponse est oui
-							if(allResponses[j]['response'] == 1){
-								// on ajoute le pokemon a la liste des yesResults de la quest
-								yesRslt.push(pokemons[ allResponses[j]['idPokemon'] ]);
-							}
-							else{
-								noRslt.push(pokemons[ allResponses[j]['idPokemon'] ]);
-							}
-						}
-					}
-					if(allQuestions[i]['typeQuestion'] !== undefined && allQuestions[i]['typeQuestion']!== ""){
-						typeQuestion = new TypeQuestion(allQuestions[i]['typeQuestion']);
-					}
-					quests[i] = new Quest(allQuestions[i]['text'],yesRslt,noRslt,allQuestions[i]['priority'],typeQuestion);
-				}
-
-			},function(erreur){
-				show_error("Erreur lors du chargement des questions : " + erreur);
-			})
-		},function(erreur){
-			show_error("Erreur lors du chargement des réponses : " + erreur);
-		})
 	},function(erreur){
 		show_error("Erreur lors du chargement des pokemons : " + erreur);
 	});
 
+}
+
+function load_questions_responses(){
+	getResponses().then(function(allResponsesJson){
+		allResponses = JSON.parse(allResponsesJson);
+
+		load_questions(allResponses);
+
+	},function(erreur){
+		show_error("Erreur lors du chargement des réponses : " + erreur);
+	})
+}
+
+function load_questions(allResponses){
+	getQuestions().then(function(allQuestionsJson){
+		allQuestions = JSON.parse(allQuestionsJson);
+
+		create_questions(allQuestions, allResponses);
+		
+	},function(erreur){
+		show_error("Erreur lors du chargement des questions : " + erreur);
+	})
+}
+
+function create_questions(allQuestions, allResponses){
+	var typeQuestion;
+	for (var i = 0; i < allQuestions.length ; i++){
+		var yesRslt = new Array();
+		var noRslt = new Array();
+		for (var j = 0; j < allResponses.length; j++){
+			// pour toutes les réponses relative à cette question
+			if(allResponses[j]['idQuestion'] == allQuestions[i]['id']){
+				// si la réponse est oui
+				if(allResponses[j]['response'] == 1){
+					// on ajoute le pokemon a la liste des yesResults de la quest
+					yesRslt.push(pokemons[ allResponses[j]['idPokemon'] ]);
+				}
+				else{
+					noRslt.push(pokemons[ allResponses[j]['idPokemon'] ]);
+				}
+			}
+		}
+		if(allQuestions[i]['typeQuestion'] !== undefined && allQuestions[i]['typeQuestion']!== ""){
+			typeQuestion = new TypeQuestion(allQuestions[i]['typeQuestion']);
+		}
+		quests[i] = new Quest(allQuestions[i]['text'],yesRslt,noRslt,allQuestions[i]['priority'],typeQuestion);
+	}
 }
 
 function do_yes() {
