@@ -1,0 +1,54 @@
+/* Copyright 2014 Lucas Jacques
+ * This file is part of FindYourAnimal.
+ * FindYourAnimal is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * FindYourAnimal is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License    along with FindYourAnimal.  
+ * If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
+.mainTitle {
+	font-family: sans-serif;
+	font-size: 70px;
+	color:#fff;
+	text-shadow: 2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 1px 1px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+}
+
+.text1 {
+	font-family: sans-serif;
+	font-size: 25px;
+	color:#fff;
+	text-shadow: 2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 1px 1px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+}
+
+body {
+	text-align: center;
+}
+
+ #userInterface {
+ 	width: 100px;
+ 	margin-right: auto;
+ 	margin-left: auto;
+ }
+
+.btn {
+	font-family: sans-serif;
+	font-size: 30px;
+	float: left;
+	background-color: #999;
+	border-spacing: 2px;
+	border-color: #000;
+}
+
+#animName {
+	font-family: sans-serif;
+}
+
+#animDiff {
+	font-family: sans-serif;
+}
