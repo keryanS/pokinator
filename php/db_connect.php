@@ -38,7 +38,7 @@ class DB
    *
    * @var string
    */
-  const DEFAULT_SQL_PASS = '';
+  const DEFAULT_SQL_PASS = 'root';
  
   /**
    * Constante: nom de la bdd
