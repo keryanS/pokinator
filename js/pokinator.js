@@ -79,8 +79,22 @@ function load_questions(allResponses){
 }
 
 function create_questions(allQuestions, allResponses){
+	var typesQuestion = new Array();
 	var typeQuestion;
 	for (var i = 0; i < allQuestions.length ; i++){
+		if(allQuestions[i]['typeQuestion'] !== undefined && allQuestions[i]['typeQuestion'] !== ""){
+			var typeInArray = $.grep(typesQuestion, function(e){ return e.nameType == allQuestions[i]['typeQuestion']; })
+			if(typeInArray.length>0){
+				typeQuestion = typeInArray[0];
+			}
+			else{
+				typeQuestion = new TypeQuestion(allQuestions[i]['typeQuestion']);
+				typesQuestion.push(typeQuestion);
+			}
+		}
+		else{
+			typeQuestion = null;
+		}
 		var yesRslt = new Array();
 		var noRslt = new Array();
 		for (var j = 0; j < allResponses.length; j++){
@@ -96,9 +110,7 @@ function create_questions(allQuestions, allResponses){
 				}
 			}
 		}
-		if(allQuestions[i]['typeQuestion'] !== undefined && allQuestions[i]['typeQuestion']!== ""){
-			typeQuestion = new TypeQuestion(allQuestions[i]['typeQuestion']);
-		}
+
 		quests[i] = new Quest(allQuestions[i]['text'],yesRslt,noRslt,allQuestions[i]['priority'],typeQuestion);
 	}
 }
@@ -108,7 +120,7 @@ function do_yes() {
 		do_yes_next_question();
 	}
 	else if(pokemonTrouve === undefined){
-		do_yes_finish();
+		do_finish(1);
 	}
 	else{
 
@@ -140,10 +152,9 @@ function do_yes_next_question(){
 	}
 	actual.alreadyAsk = true;
 
-	console.log("actual.typeQuestion = "+actual.typeQuestion.alreadyAsk);
-	if(actual.typeQuestion !== undefined){
+	if(actual.typeQuestion){
 		actual.typeQuestion.alreadyAsk = true;
-		console.log("Type deja trouvé : "+actual.typeQuestion.alreadyAsk);
+		console.log("Type deja trouvé : "+actual.typeQuestion.nameType);
 	}
 	
 	nextQuestion();
@@ -152,74 +163,13 @@ function do_yes_next_question(){
 	document.getElementById("text1").textContent = actual.txt;
 }
 
-function do_yes_finish(){
-	var maxScore = -999;
-	for(var i=1; i<pokemons.length; i++){
-		if(pokemons[i].score > maxScore) {				
-			maxScore = pokemons[i].score;
-			pokemonTrouve = pokemons[i];
-		}
-	}
-
-	// on ajoute la réponse à l'historique
-	var respYes = new Resp(actual,1);
-	historiqueResp.push(respYes);
-
-	actual.alreadyAsk = true;
-	
-	//visual
-	document.getElementById("text1").textContent = pokemonTrouve.txt;
-}
-
 function do_no() {
 	// TODO : 20 max && score 1er >>> score 2eme
 	if(nbQuestions<20) {
-		nbQuestions++;
-
-		for(var i=0; i < actual.yesResults.length; i++){
-			actual.yesResults[i].score -= 1;
-			console.log(actual.yesResults[i].pokemonName+" : "+actual.yesResults[i].score);
-		}
-
-		for(var i=0; i < actual.noResults.length; i++){
-			actual.noResults[i].score += 1;
-			console.log(actual.noResults[i].pokemonName+" : "+actual.noResults[i].score);
-		}
-
-		// on ajoute la réponse à l'historique
-		var respNo = new Resp(actual,0);
-		historiqueResp.push(respNo);
-		for(var i=0;i<historiqueResp.length;i++){
-			console.log(historiqueResp[i].question.txt);
-		}
-
-		actual.alreadyAsk = true;
-
-		nextQuestion();
-		
-		//visual
-		document.getElementById("text1").textContent = actual.txt;
+		do_no_next_question();
 	}
 	else if(pokemonTrouve === undefined){
-		console.log("On renvoie le pokemon qui a le plus grand score");
-		var maxScore=-1;
-		for(var i=1; i<pokemons.length; i++){
-			if(pokemons[i].score > maxScore) {
-				maxScore = pokemons[i].score;
-				pokemonTrouve = pokemons[i];
-			}
-		}
-		// on ajoute la réponse à l'historique
-		var respNo = new Resp(actual,0);
-		historiqueResp.push(respNo);
-		for(var i=0;i<historiqueResp.length;i++){
-			console.log(historiqueResp[i].question.txt);
-		}
-		actual.alreadyAsk = true;
-
-		//visual
-		console.log(pokemonTrouve);
-		document.getElementById("text1").textContent = pokemonTrouve.txt;
+		do_finish(0);
 	}
 	else {
 		
@@ -234,10 +184,72 @@ function do_no() {
 	}
 }
 
-function nextQuestion(){
-	while( actual.alreadyAsk || actual.typeQuestion.alreadyAsk){
-		actual = quests[Math.floor( (Math.random() * quests.length) )];
+function do_no_next_question(){
+	nbQuestions++;
+	for(var i=0; i < actual.yesResults.length; i++){
+		actual.yesResults[i].score -= 1;
+		console.log(actual.yesResults[i].pokemonName+" : "+actual.yesResults[i].score);
 	}
+
+	for(var i=0; i < actual.noResults.length; i++){
+		actual.noResults[i].score += 1;
+		console.log(actual.noResults[i].pokemonName+" : "+actual.noResults[i].score);
+	}
+
+	// on ajoute la réponse à l'historique
+	var respNo = new Resp(actual,0);
+	historiqueResp.push(respNo);
+	for(var i=0;i<historiqueResp.length;i++){
+		console.log(historiqueResp[i].question.txt);
+	}
+
+	actual.alreadyAsk = true;
+
+	nextQuestion();
+	
+	//visual
+	document.getElementById("text1").textContent = actual.txt;
+}
+
+function do_finish(lastResponse){
+	var maxScore=-999;
+	for(var i=1; i<pokemons.length; i++){
+		if(pokemons[i].score > maxScore) {
+			maxScore = pokemons[i].score;
+			pokemonTrouve = pokemons[i];
+		}
+	}
+	// on ajoute la réponse à l'historique
+	var respNo = new Resp(actual,lastResponse);
+	historiqueResp.push(respNo);
+	
+	actual.alreadyAsk = true;
+
+	//visual
+	document.getElementById("text1").textContent = pokemonTrouve.txt;
+}
+
+function nextQuestion(){
+	var i=0; 
+	for(i;i<quests.length;i++){
+		if( !quests[i].alreadyAsk ){
+			console.log(quests[i]);
+			if(quests[i].typeQuestion){
+				if(!quests[i].typeQuestion.alreadyAsk){
+					actual = quests[i];
+					break;
+				}
+			}
+			else{
+				actual = quests[i];
+				break;
+			}
+		}
+	}
+	if(i==quests.length){
+		alert("on a plus de questions !");
+	}
+
 }
 
 function do_again() {
@@ -265,7 +277,6 @@ function do_ready() {
 	if(document.getElementById("inpName").value === "" || (document.getElementById("inpDiff").value === "" || pokemonTrouve === undefined)) {
 		show_error("Veuillez rentrer un nom de pokmemon et une question.");
 	}
-
 	else {
 		// on clone le tableau des pokemons
 		var existingPokemons = jQuery.extend({}, pokemons);
