@@ -42,7 +42,7 @@ function getResponses(){
 
 function getQuestions(){
     $db = DB::getInstance();
-    $result=$db->query('SELECT * FROM question');
+    $result=$db->query('SELECT * FROM question ORDER BY `priority` DESC, RAND()');
     return $result->fetchAll(PDO::FETCH_ASSOC);
 }
 
