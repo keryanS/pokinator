@@ -12,23 +12,25 @@
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
-var pokemons = new Array();
-var quests = new Array();
+var pokemons = [];
+var quests = [];
 var actual = new Quest();
-var historiqueResp = new Array();
+var historiqueResp = [];
 var nbQuestions = 0;
-var pokemonTrouve = new Array();
-var pokemonElimines = new Array();
+var pokemonTrouve = [];
+var pokemonElimines = [];
 
 
 window.onload = load_data();
 
 function do_start() {
-	actual = quests[0];
+	nextQuestion();
 	document.getElementById("text1").textContent = actual.txt;
 	document.getElementById("btnOk").style.display = "none";
 	document.getElementById("btnYes").style.display = "block";
 	document.getElementById("btnNo").style.display = "block";
+	document.getElementById("btnMaybeYes").style.display = "block";
+	document.getElementById("btnMaybeNo").style.display = "block";
 	document.getElementById("btnDontKnow").style.display = "block";
 }
 
@@ -38,8 +40,8 @@ function show_error(erreur){
 }
 
 function load_data() {
-	var allQuestions = new Array();
-	var allResponses = new Array();
+	var allQuestions = [];
+	var allResponses = [];
 	
 	// load pokemons
 	getPokemons().then(function(allPokemonsJson){
@@ -80,7 +82,7 @@ function load_questions(allResponses){
 }
 
 function create_questions(allQuestions, allResponses){
-	var typesQuestion = new Array();
+	var typesQuestion = [];
 	var typeQuestion;
 	for (var i = 0; i < allQuestions.length ; i++){
 		if(allQuestions[i]['typeQuestion'] !== undefined && allQuestions[i]['typeQuestion'] !== ""){
@@ -117,7 +119,7 @@ function create_questions(allQuestions, allResponses){
 }
 
 function do_yes() {
-	if(nbQuestions<20) {
+	if(actual) {
 		do_yes_next_question();
 	}
 	else if(pokemonTrouve.length === 0){
@@ -130,6 +132,8 @@ function do_yes() {
 		document.getElementById("btnAgain").style.display = "block";
 		document.getElementById("btnYes").style.display = "none";
 		document.getElementById("btnNo").style.display = "none";
+		document.getElementById("btnMaybeYes").style.display = "none";
+		document.getElementById("btnMaybeNo").style.display = "none";
 		document.getElementById("btnDontKnow").style.display = "none";
 		
 	}
@@ -139,12 +143,12 @@ function do_yes_next_question(){
 	nbQuestions++;
 
 	for(var i=0; i < actual.yesResults.length; i++){
-		actual.yesResults[i].score += 1;
+		actual.yesResults[i].score += 5;
 		console.log(actual.yesResults[i].pokemonName+" : "+actual.yesResults[i].score);
 	}
 
 	for(var i=0; i < actual.noResults.length; i++){
-		actual.noResults[i].score -= 1;
+		actual.noResults[i].score -= 5;
 		if(!pokemonInArray(actual.noResults[i], pokemonElimines)){
 			pokemonElimines.push(actual.noResults[i]);
 		}
@@ -160,7 +164,54 @@ function do_yes_next_question(){
 	if(nextQuestion())
 		document.getElementById("text1").textContent = actual.txt;
 	else
-		do_finish();
+		do_finish(historiqueResp[historiqueResp.length]);
+}
+
+function do_maybe_yes(){
+	if(actual) {
+		do_maybe_yes_next_question();
+	}
+	else if(pokemonTrouve.length === 0){
+		console.log("pokemon trouvé : "+pokemonTrouve.length );
+		do_finish(1);
+	}
+	else{
+		document.getElementById("text1").textContent = "je suis trop fort";
+		document.getElementById("btnAgain").style.display = "block";
+		document.getElementById("btnYes").style.display = "none";
+		document.getElementById("btnNo").style.display = "none";
+		document.getElementById("btnMaybeYes").style.display = "none";
+		document.getElementById("btnMaybeNo").style.display = "none";
+		document.getElementById("btnDontKnow").style.display = "none";
+	}
+}
+
+function do_maybe_yes_next_question(){
+	nbQuestions++;
+
+	for(var i=0; i < actual.yesResults.length; i++){
+		actual.yesResults[i].score += 3;
+		console.log(actual.yesResults[i].pokemonName+" : "+actual.yesResults[i].score);
+	}
+
+	for(var i=0; i < actual.noResults.length; i++){
+		actual.noResults[i].score -= 3;
+		if(!pokemonInArray(actual.noResults[i], pokemonElimines)){
+			pokemonElimines.push(actual.noResults[i]);
+		}
+		console.log(actual.noResults[i].pokemonName+" : "+actual.noResults[i].score);
+	}
+
+	add_to_historique(1);
+
+	if(actual.typeQuestion){
+		actual.typeQuestion.alreadyAsk = true;
+	}
+	
+	if(nextQuestion())
+		document.getElementById("text1").textContent = actual.txt;
+	else
+		do_finish(historiqueResp[historiqueResp.length]);
 }
 
 function do_dont_know(){
@@ -172,7 +223,7 @@ function do_dont_know(){
 }
 
 function do_no() {
-	if(nbQuestions<20) {
+	if(actual) {
 		do_no_next_question();
 	}
 	else if(pokemonTrouve.length === 0){
@@ -185,6 +236,8 @@ function do_no() {
 		document.getElementById("text1").textContent = "I couldn't find your animal. What animal did you think?";
 		document.getElementById("btnYes").style.display = "none";
 		document.getElementById("btnNo").style.display = "none";
+		document.getElementById("btnMaybeYes").style.display = "none";
+		document.getElementById("btnMaybeNo").style.display = "none";
 		document.getElementById("btnDontKnow").style.display = "none";
 		document.getElementById("animName").style.display = "block";
 		document.getElementById("textDiff").textContent = "Difference avec :";
@@ -199,7 +252,7 @@ function do_no() {
 function do_no_next_question(){
 	nbQuestions++;
 	for(var i=0; i < actual.yesResults.length; i++){
-		actual.yesResults[i].score -= 1;
+		actual.yesResults[i].score -= 5;
 		if(!pokemonInArray(actual.yesResults[i], pokemonElimines)){
 			pokemonElimines.push(actual.yesResults[i]);
 		}
@@ -207,7 +260,7 @@ function do_no_next_question(){
 	}
 
 	for(var i=0; i < actual.noResults.length; i++){
-		actual.noResults[i].score += 1;
+		actual.noResults[i].score += 5;
 		console.log(actual.noResults[i].pokemonName+" : "+actual.noResults[i].score);
 	}
 
@@ -216,16 +269,72 @@ function do_no_next_question(){
 	if(nextQuestion())
 		document.getElementById("text1").textContent = actual.txt;
 	else
-		do_finish();
+		do_finish(historiqueResp[historiqueResp.length]);
+}
+
+function do_maybe_no() {
+	if(actual) {
+		do_maybe_no_next_question();
+	}
+	else if(pokemonTrouve.length === 0){
+		console.log("pokemon trouvé : "+pokemonTrouve.length );
+		do_finish(0);
+	}
+	else {
+		
+		//visual
+		document.getElementById("text1").textContent = "I couldn't find your animal. What animal did you think?";
+		document.getElementById("btnYes").style.display = "none";
+		document.getElementById("btnNo").style.display = "none";
+		document.getElementById("btnMaybeYes").style.display = "none";
+		document.getElementById("btnMaybeNo").style.display = "none";
+		document.getElementById("btnDontKnow").style.display = "none";
+		document.getElementById("animName").style.display = "block";
+		document.getElementById("textDiff").textContent = "Difference avec :";
+		for(var i=0; i<pokemonTrouve.length; i++){
+			$("#textDiff").append("<li>"+pokemonTrouve[i].pokemonName + "</li>");
+		}
+		document.getElementById("animDiff").style.display = "block";
+		document.getElementById("btnReady").style.display = "block";
+	}
+}
+
+function do_maybe_no_next_question(){
+	nbQuestions++;
+	for(var i=0; i < actual.yesResults.length; i++){
+		actual.yesResults[i].score -= 3;
+		if(!pokemonInArray(actual.yesResults[i], pokemonElimines)){
+			pokemonElimines.push(actual.yesResults[i]);
+		}
+		console.log(actual.yesResults[i].pokemonName+" : "+actual.yesResults[i].score);
+	}
+
+	for(var i=0; i < actual.noResults.length; i++){
+		actual.noResults[i].score += 3;
+		console.log(actual.noResults[i].pokemonName+" : "+actual.noResults[i].score);
+	}
+
+	add_to_historique(0);
+
+	if(nextQuestion())
+		document.getElementById("text1").textContent = actual.txt;
+	else
+		do_finish(historiqueResp[historiqueResp.length]);
 }
 
 function do_finish(lastResponse){
 	var maxScore = getMaxScore();
+
 	for(var i=1; i<pokemons.length; i++){
-		if(pokemons[i].score == maxScore) {
+		if(!pokemonInArray(pokemons[i], pokemonElimines)){
 			pokemonTrouve.push(pokemons[i]);
 		}
 	}
+	/*for(var i=1; i<pokemons.length; i++){
+		if(pokemons[i].score == maxScore) {
+			pokemonTrouve.push(pokemons[i]);
+		}
+	}*/
 
 	if(lastResponse){
 		add_to_historique(lastResponse);
@@ -247,7 +356,7 @@ function do_finish(lastResponse){
 }
 
 function add_to_historique(lastResponse){
-	if(lastResponse){
+	if(lastResponse !== undefined){
 		var resp = new Resp(actual,lastResponse);
 		historiqueResp.push(resp);
 	}	
@@ -270,8 +379,6 @@ function nextQuestion(){
 	var questMaxEntropie;
 	for(i;i<quests.length;i++){
 		var entropie = calcul_entropie(quests[i]);
-					console.log(quests[i].txt + " : " + entropie);
-
 		if(entropie>maxEntropie && !quests[i].alreadyAsk){
 			if(quests[i].typeQuestion){
 				if( !quests[i].typeQuestion.alreadyAsk ){
@@ -286,8 +393,7 @@ function nextQuestion(){
 		}
 	}
 	actual = questMaxEntropie;
-	console.log(questMaxEntropie);
-	return actual;
+	return questMaxEntropie;
 }
 
 function calcul_entropie(quest){
@@ -301,10 +407,11 @@ function calcul_entropie(quest){
 		if( !pokemonInArray(quest.noResults[i],pokemonElimines) )
 			noPokemons.push(quest.noResults[i]);
 	}
+	console.log(quest.txt + " : " + (yesPokemons.length)*(noPokemons.length));
 	console.log("yesPokemon : "+yesPokemons.length);
-		console.log("noPokemon : "+noPokemons.length);
+	console.log("noPokemon : "+noPokemons.length);
 
-	return (yesPokemons.length+1)*(noPokemons.length+1);
+	return (yesPokemons.length)*(noPokemons.length);
 }
 
 function do_again() {
@@ -315,10 +422,11 @@ function do_again() {
 		quests[i].alreadyAsk = false;
 	}
 	nbQuestions = 0;
-	pokemonTrouve = new Array();
-	actual = quests[Math.floor( (Math.random() * quests.length) )];
-	alreadyAsk = new Array();
-	historiqueResp = new Array();
+	pokemonTrouve = [];
+	pokemonElimines = [];
+	actual = nextQuestion();
+	alreadyAsk = [];
+	historiqueResp = [];
 	//visual
 	document.getElementById("text1").textContent = "Penses à un pokemon et je le trouve";
 	document.getElementById("btnAgain").style.display = "none";
@@ -333,14 +441,15 @@ function do_ready() {
 	}
 	else {
 		// on clone le tableau des pokemons
-		var existingPokemons = jQuery.extend({}, pokemons);
+		var existingPokemons = jQuery.extend({}, true, pokemons);
+		var existingPokemonsArray = jQuery.makeArray( existingPokemons );
 		pokeTmp = new Pokemon(document.getElementById("inpName").value);
-		questTmp = new Quest(document.getElementById("inpDiff").value, [pokeTmp], existingPokemons);
+		questTmp = new Quest(document.getElementById("inpDiff").value, [pokeTmp], existingPokemonsArray);
 		console.log(pokeTmp.pokemonName+" dira oui a la question : " + questTmp.txt);
 
 		pokemons.push(pokeTmp);
 		quests.push(questTmp);	
-					
+		
 		for(var i=0; i<historiqueResp.length; i++){
 			if(historiqueResp[i].response == 1){
 				historiqueResp[i].question.yesResults.push(pokeTmp);
@@ -364,37 +473,39 @@ function do_ready() {
 }
 
 function do_return(){
-		actual = historiqueResp[historiqueResp.length-1].question;
-		var lastQuestion = historiqueResp[historiqueResp.length-1].question;
-		var lastResponse = historiqueResp[historiqueResp.length-1].response;
-		if(lastResponse==1 || lastResponse==true){
-			for(var i=0;i<lastQuestion.yesResults.length;i++){
-				// TODO changer -- en -= historiqueResp.question.yesResults[i].priority
-				lastQuestion.yesResults[i].score--;
-			}
-			for(var i=0;i<lastQuestion.noResults.length;i++){
-				// TODO changer ++ en += historiqueResp.question.yesResults[i].priority
-				lastQuestion.noResults[i].score++;
-			}
+	actual = historiqueResp[historiqueResp.length-1].question;
+	var lastQuestion = historiqueResp[historiqueResp.length-1].question;
+	var lastResponse = historiqueResp[historiqueResp.length-1].response;
+	if(lastResponse==1 || lastResponse==true){
+		for(var i=0;i<lastQuestion.yesResults.length;i++){
+			// TODO changer -- en -= historiqueResp.question.yesResults[i].priority
+			lastQuestion.yesResults[i].score--;
 		}
-		else{
-			for(var i=0;i<lastQuestion.noResults.length;i++){
-				// TODO changer -- en -= historiqueResp.question.yesResults[i].priority
-				lastQuestion.noResults[i].score--;
-			}
-			for(var i=0;i<lastQuestion.yesResults.length;i++){
-				// TODO changer ++ en += historiqueResp.question.yesResults[i].priority
-				lastQuestion.yesResults[i].score++;
-			}
+		for(var i=0;i<lastQuestion.noResults.length;i++){
+			// TODO changer ++ en += historiqueResp.question.yesResults[i].priority
+			lastQuestion.noResults[i].score++;
 		}
-		console.log(actual);
-		document.getElementById("text1").textContent = actual.txt;
-		historiqueResp.pop();
 	}
+	else{
+		for(var i=0;i<lastQuestion.noResults.length;i++){
+			// TODO changer -- en -= historiqueResp.question.yesResults[i].priority
+			lastQuestion.noResults[i].score--;
+		}
+		for(var i=0;i<lastQuestion.yesResults.length;i++){
+			// TODO changer ++ en += historiqueResp.question.yesResults[i].priority
+			lastQuestion.yesResults[i].score++;
+		}
+	}
+	console.log(actual);
+	document.getElementById("text1").textContent = actual.txt;
+	historiqueResp.pop();
+}
 
 function pokemonInArray(pokemon, pokemonsArray) { 
     for(var i=0; i < pokemonsArray.length; i++) { 
-        if(pokemonsArray[i].pokemonName == pokemon.pokemonName) return true; 
+        if(pokemonsArray[i].pokemonName == pokemon.pokemonName){
+        	return true; 
+        }
     }
     return false; 
-};
+}
